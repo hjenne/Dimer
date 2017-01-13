@@ -8,6 +8,9 @@ class Hexagon:
         self.b = b 
         self.d = d 
         self.picture, self.l, self.w = self.make_hexagon(a,b,d)
+        self.find_all_X()
+        self.find_all_O()
+        self.n = len(self.X_list)
 
     def is_X(self,r, c):
         r1 = r % 4
@@ -72,19 +75,40 @@ class Hexagon:
     def __repr__(self):
         return str(self)
 
+    def find_all_X(self):    
+        self.X_list = []
+        self.X_dict = {}
+        for r in range(self.l):
+            for c in range(self.w):
+                if self.picture[r][c] == "X":
+                    self.X_list.append((r,c))
+        for i,X in enumerate(self.X_list):
+            self.X_dict[X] = i
+
+    def find_all_O(self):    
+        self.O_list = []
+        self.O_dict = {}
+        for r in range(self.l):
+            for c in range(self.w):
+                if self.picture[r][c] == "O":
+                    self.O_list.append((r,c))
+        for i,O in enumerate(self.O_list):
+            self.O_dict[O] = i
+
     def make_matrix(self):
-        picture, l, w = make_hexagon(5,4,6)
         matrix = {}
+        w = self.w
+        l = self.l
         for r in range(l):
             for c in range(w):
-                if picture[r][c] == "x":
-                    if c <= w-3 and picture[r][c+4] == "o":
-                        matrix[((r,c), (r,c+4))] = 1
-                    if r <=l-2 and c>= 2 and picture[r+2][c-2] == "o":
-                        matrix[((r,c), (r+2,c-2))] = 1
-                    if r >=2 and c >=2 and picture[r-2][c-2] == "o":
-                        matrix[((r,c), (r-2,c-2))] = 1
-        print matrix
+                if self.picture[r][c] == "X":
+                    if c <= w-3 and self.picture[r][c+4] == "O":
+                        matrix[(self.X_dict[(r,c)], self.O_dict[(r,c+4)])] = 1
+                    if r <=l-2 and c>= 2 and self.picture[r+2][c-2] == "O":
+                        matrix[(self.X_dict[(r,c)], self.O_dict[(r+2,c-2)])] = 1
+                    if r >=2 and c >=2 and self.picture[r-2][c-2] == "O":
+                        matrix[(self.X_dict[(r,c)], self.O_dict[(r-2,c-2)])] = 1
+        return matrix
 
 H = Hexagon(4,5,6)
 
