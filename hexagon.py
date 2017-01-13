@@ -110,6 +110,41 @@ class Hexagon:
                         matrix[(self.X_dict[(r,c)], self.O_dict[(r-2,c-2)])] = 1
         return matrix
 
+    def find_smallest_matching(self):
+        # write this.
+        pass
+
+class Matching():
+    def __init__(self, H, edges=None):
+        self.H = H
+        if edges == None:
+            self.edges = H.find_smallest_matching()
+        else:
+            self.edges = edges
+
+    def __str__(self):
+        # print out self
+        pass
+
+    def __repr__(self):
+        return str(self)
+
+    def bigger_matchings(self):
+        # look for this 
+        #    X   O  
+        #   /     \ 
+        #  O       X
+        #            
+        #    X---O  
+
+        # when you find it, make a new matching with this
+        #    X---O  
+        #           
+        #  O       X
+        #   \     /  
+        #    X   O  
+        # return a list of all those
+
 H = Hexagon(4,5,6)
 
 
