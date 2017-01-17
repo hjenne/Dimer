@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import math
+from copy import deepcopy
 
 class Hexagon:
     def __init__(self, a, b, d):
@@ -263,7 +264,7 @@ class Matching():
         l = []
         for i in range(n):
             r, c = coordinates[i][0], coordinates[i][1]
-            newmatching = matching
+            newmatching = deepcopy(matching)
             newmatching = self.add_box(newmatching, r, c)
             l.append(newmatching)
             print "This is list " + str(i)
