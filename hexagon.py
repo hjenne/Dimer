@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import math
+import itertools
 from copy import deepcopy
 
 class Hexagon:
@@ -257,7 +258,6 @@ class Matching():
         return matching
 
 #make list of matchings    
-#this isn't working, the list it returns is just the last item it put in the list repeated three times
     def make_bigger_matching(self, matching):
         coordinates = self.find_bigger_matching(matching)
         n = len(coordinates)
@@ -267,25 +267,25 @@ class Matching():
             newmatching = deepcopy(matching)
             newmatching = self.add_box(newmatching, r, c)
             l.append(newmatching)
-            print "This is list " + str(i)
-            for row in l[i]:
-                print " ".join(row)
+        return l
+
+#Finds all configurations with 1 box, starting from the minimal matching
+    def find_all_config(self, n):
+        matching = self.matching
+        l = [matching]
+        l2 = []
+        for j in range(n):
+            l2 = []
+            for i in range(len(l)):
+                N = self.make_bigger_matching(l[i])
+                l2.append(N)
+            l = [item for sublist in l2 for item in sublist]
+        l.sort()
+        l = list(l for l,_ in itertools.groupby(l))
+        print len(l)
         return l
                         
 
-H = Hexagon(4,4,4)
-M = Matching(Hexagon(4, 4,4))
-firstmatchinglist = M.make_bigger_matching(M.matching)
-#print "After one box is added:"
-#for row in firstmatchinglist[0]:
-   # print " ".join(row)
-l = M.make_bigger_matching(firstmatchinglist[0])
-print "This is the first item in the list:"
-for row in l[0]:
-    print " ".join(row)
-print "This is the second item in the list:"
-for row in l[1]:
-    print " ".join(row)
-print "This is the third item in the list:"
-for row in l[2]:
-    print " ".join(row)
+H = Hexagon(8,8,8)
+M = Matching(Hexagon(8,8,8))
+l = M.find_all_config(7)
