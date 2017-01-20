@@ -11,6 +11,8 @@ class Hexagon:
         self.d = d 
         self.picture, self.l, self.w = self.make_hexagon()
         self.matching = self.find_smallest_matching()
+        self.other_matching = self.find_other_matching()
+        self.deleted_nodes = self.deleted_nodes()
         self.find_all_X()
         self.find_all_O()
         self.n = len(self.X_list)
@@ -72,12 +74,58 @@ class Hexagon:
                             picture[r][c+i] = "-"
         return picture, l, w
 
+#makes hexagon without the nodes        
+    def deleted_nodes(self):
+        a = self.a
+        b = self.b
+        d = self.d
+        s = 4* int(math.floor(a/2)) #row of upper left corner of hexagon. 
+        if (a%2 == 0):
+            t = 2 #row of top right corner of hexagon
+        else:
+            t = 0
+        u = 18+6*(a-3) #column of top right corner of hexagon
+        w = 6*a + 6*(b-1)+3 #number of columns needed
+        picture = deepcopy(self.picture)
+        for i in range(4):
+            picture[s+4*d][2+i] = " "
+        picture[s+4*d-1][1] = " "
+        picture[s+4*d -2][0] = " "
+        picture[s+4*d -3][1] = " "
+        picture[s+4*d -5][1] = " "
+        picture[s+4*d -6][0] = " "
+        picture[s+4*d -7][1] = " "
+        for i in range(4):
+            picture[s+4*d + 2*(b-a)][w-3-i] = " " 
+        picture[s+4*d + 2*(b-a)-2][w-1] = " "
+        picture[s+4*d + 2*(b-a)-1][w-2] = " " 
+        picture[s+4*d + 2*(b-a)-3][w-2] = " " 
+        picture[s+4*d + 2*(b-a)-6][w-1] = " " 
+        picture[s+4*d + 2*(b-a)-7][w-2] = " "
+        picture[s+4*d + 2*(b-a)-5][w-2] = " "  
+        picture[t][6*a] = " "
+        picture[t+1][6*a +1] = " "
+        picture[t+1][6*a -4 -1] = " "
+        for i in range(4):
+            picture[t][6*a-4+i] = " "
+        picture[t+3][6*(a+1) + 1] = " "
+        for i in range(4):
+            picture[t+2][6*(a+1) - i] = " "
+        picture[t+3][6*(a-1) - 4 -1] = " "
+        for i in range(4):
+            picture[t+2][6*(a-1) -4 + i] = " "
+        return picture
+
     def __str__(self):
         output = ""
         for row in self.picture:
-            output += " ".join(row) + "\n"
+            output += "".join(row) + "\n"
         for row in self.matching:
-            output += " ".join(row) + "\n"
+            output += "".join(row) + "\n"
+        for row in self.other_matching:
+            output += "".join(row) + "\n"
+        for row in self.deleted_nodes:
+            output += "".join(row) + "\n"
         return output
 
     def __repr__(self):
@@ -118,9 +166,26 @@ class Hexagon:
                     if r >=2 and c >=2 and self.picture[r-2][c-2] == "O":
                         matrix[(self.X_dict[(r,c)], self.O_dict[(r-2,c-2)])] = 1
         return matrix
+        
+#Makes weighted adjacency matrix assuming all of the edges are there:
+#This isn't right
+    def make_weighted_matrix(self):
+        matrix = {}
+        w = self.w
+        l = self.l
+        for r in range(l):
+            for c in range(w):
+                if self.picture[r][c] == "X":
+                    if c <= w-3 and self.picture[r][c+4] == "O":
+                        matrix[(self.X_dict[(r,c)], self.O_dict[(r,c+4)])] = ((l-r)/4)
+                    if r <=l-2 and c>= 2 and self.picture[r+2][c-2] == "O":
+                        matrix[(self.X_dict[(r,c)], self.O_dict[(r+2,c-2)])] = 1
+                    if r >=2 and c >=2 and self.picture[r-2][c-2] == "O":
+                        matrix[(self.X_dict[(r,c)], self.O_dict[(r-2,c-2)])] = 1
+        return matrix
 
 #Makes adjacency matrix only for edges that are there 
-#This makes adjacency matrix for the minimal matching 
+#This makes adjacency matrix for the smallest matching 
     def make_matching_matrix(self):
         matrix = {}
         w = self.w
@@ -136,8 +201,7 @@ class Hexagon:
                         matrix[(self.X_dict[(r,c)], self.O_dict[(r-2,c-2)])] = 1
         return matrix
         
-#Makes a list of edges in the minimal matching. 
-#Not sure if this is useful
+#Makes a list of edges in the smallest matching. 
     def make_edge_list(self):
         edge_list = []
         w = self.w
@@ -189,7 +253,131 @@ class Hexagon:
                             for i in range(3):
                                 matching[r][c+i] = "-"
         return matching
+ 
+#Checks if X or O is already in the matching. Returns true if it is
+    def is_adj(self, r, c, matching):
+        a = self.a
+        b = self.b
+        d = self.d
+        s = 4* int(math.floor(a/2)) #row of upper left corner of hexagon. 
+        if (a%2 == 0):
+            t = 2 #row of top right corner of hexagon
+        else:
+            t = 0
+        u = 18+6*(a-3) #column of top right corner of hexagon
+        w = 6*a + 6*(b-1)+3 #number of columns needed
+        m = max(a, b)
+        l = t+4*d + (m-1)*4+1 #this is too many rows when a \neq b
+        if ( (c < w-3 and matching[r][c+1] == "-") or
+        (r <=l-2 and c>= 2 and matching[r+1][c-1] == "/") or
+        (r >= 2 and c >=2 and matching[r-1][c-1] == "\\")  or
+        (c > 1 and matching[r][c-1] == "-") or
+        (r <= l-2 and c< w-1 and matching[r+1][c+1] == "\\") or
+        (r >= 2 and c< w-1 and matching[r-1][c+1] == "/") ):
+            return True
+        else:
+            return False
 
+#Finds other smallest matching.
+    def find_other_matching(self):
+        matching = []
+        a = self.a
+        b = self.b
+        d = self.d
+        s = 4* int(math.floor(a/2)) #row of upper left corner of hexagon. 
+        if (a%2 == 0):
+            t = 2 #row of top right corner of hexagon
+        else:
+            t = 0
+        u = 18+6*(a-3) #column of top right corner of hexagon
+        w = 6*a + 6*(b-1)+3 #number of columns needed
+        m = max(a, b)
+        l = t+4*d + (m-1)*4+1 #this is too many rows when a \neq b
+        for r in range(l):
+            matching.append([" "]*w)
+        for r in range(l):
+            for c in range(w):
+                if (c +3*r >= 2+3*s) and (c - 3*r <=  u - 3*t) and (c-3*r >= 2-3*s -12*d) and (c+3*r <= w-3 + 3*(s+4*d+2*(b-a))):
+                    if self.is_X(r, c):
+                        matching[r][c] = "X"
+                    if self.is_O(r, c):
+                        matching[r][c] = "O"
+                    #the vertical strip of diagonal lines:
+                    if (c >= 6*(a-1)) and (c <= 6*(a-1) +2) and (c+3*r <= 2 + 3*(s+4*d-4)):
+                        if self.is_diag2(r, c):
+                            matching[r][c] = "\\"
+                    if (c >= 6*a) and (c <= 6*a + 2) and (c - 3*r >= w-3 - 3*(s+4*d+2*(b-a)-4)):
+                        if self.is_diag1(r, c):
+                            matching[r][c] = "/"
+                    #horizontal lines above diagonal lines: 
+                    if (c < 5*a) and (c+3*r <= 2 + 3*(s+4*d)) and (c+3*r >= 2 + 3*(s+4*d-4)):
+                        if self.is_horiz(r, c):
+                            for i in range(3):
+                                matching[r][c+i] = "-"
+                    if (c > 6*a) and (c - 3*r >= w-3 - 3*(s+4*d+2*(b-a))) and (c - 3*r <= w-3 - 3*(s+4*d+2*(b-a)-4)):
+                        if self.is_horiz(r, c):
+                            for i in range(3):
+                                matching[r][c+i] = "-"
+                    #diagonal lines above the bottom horizontal lines:  
+                    if (c < 6*a) and (c+3*r <= 2 + 3*(s+4*d+4)) and (c+3*r >= 2 + 3*(s+4*d)):
+                        if self.is_diag1(r, c):
+                            matching[r][c] = "/"
+                    if (c > 6*a) and (c - 3*r >= w-3 - 3*(4+s+4*d+2*(b-a))) and (c - 3*r <= w-3 - 3*(s+4*d+2*(b-a))):
+                        if self.is_diag2(r, c):
+                            matching[r][c] = "\\"   
+                    #bottom horizontal lines
+                    if (c+3*r >= 2 + 3*(s+4*d+4)) and (c - 3*r <= w-3 - 3*(4+s+4*d+2*(b-a))):
+                        if self.is_horiz(r, c):
+                            for i in range(3):
+                                matching[r][c+i] = "-"
+        #delete nodes:
+        matching[s+4*d][2] = "*"
+        matching[s+4*d -2][0] = "*"
+        matching[s+4*d -6][0] = "*"
+        matching[s+4*d + 2*(b-a)][w-3] = "*" 
+        matching[s+4*d + 2*(b-a)-2][w-1] = "*" 
+        matching[s+4*d + 2*(b-a)-6][w-1] = "*" 
+        matching[t][6*a] = "*"
+        matching[t][6*a-4] = "*"
+        matching[t+2][6*(a+1)] = "*"
+        matching[t+2][6*(a-1)-4] = "*"
+        # puts in edges in column 2 and w-1
+        for r in range(l):
+            for c in range(w):
+                if matching[r][c] == "X":
+                    if not self.is_adj(r, c, matching):
+                        if c == 2 and matching[r+2][c-2] == "O":
+                            matching[r+1][c-1] = "/"
+                        if c == w-1 and matching[r-2][c-2] == "O":
+                            matching[r-1][c-1] = "\\"
+        #Puts in other diagonal edges:
+        for r in range(l):
+            for c in range(w):
+                if matching[r][c] == "X":
+                    if not self.is_adj(r, c, matching):
+                        for i in range(a-3):
+                            if c == 8+i*6 and r == 6-2*i and matching[r+2][c-2] == "O":
+                                matching[r+1][c-1] = "/"
+                            if c == w-1-6 - 6*i and r == 8-2*i and matching[r-2][c-2] == "O":
+                                matching[r-1][c-1] = "\\"
+        #Only works for 3 x 3 x 3 case
+        for r in range(l):
+            for c in reversed(range(w)):
+                if matching[r][c] == "X":
+                    if not self.is_adj(r, c, matching):                
+                        if matching[r-2][c-2] == "O":
+                            if not self.is_adj(r-2, c-2, matching):
+                                matching[r-1][c-1] = "\\"
+                    if not self.is_adj(r, c, matching):
+                        if matching[r][c+4] == "O":
+                            if not self.is_adj(r, c+4, matching):
+                                for i in range(3):
+                                    matching[r][c+i+1] = "-"
+                    if not self.is_adj(r, c, matching):
+                        if matching[r+2][c-2] == "O":
+                            if not self.is_adj(r+2, c-2, matching):
+                                matching[r+1][c-1] = "/"
+        return matching
 
 class Matching():
     def __init__(self, H, edges=None):
@@ -273,7 +461,6 @@ class Matching():
     def find_all_config(self, n):
         matching = self.matching
         l = [matching]
-        l2 = []
         for j in range(n):
             l2 = []
             for i in range(len(l)):
@@ -286,6 +473,6 @@ class Matching():
         return l
                         
 
-H = Hexagon(8,8,8)
-M = Matching(Hexagon(8,8,8))
-l = M.find_all_config(7)
+H = Hexagon(4,4,4)
+#M = Matching(Hexagon(9,9,9))
+#l = M.find_all_config(8)
